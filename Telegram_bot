@@ -1,0 +1,354 @@
+from importlib.metadata import files
+
+import telebot
+from telebot import types
+import os
+
+Token = "7511852262:AAGl9YpO0NWi4m7SDLeSYW5qCJtiZO4dYt0"
+bot = telebot.TeleBot(Token)
+
+user_data = {}
+user_states = {}
+
+@bot.message_handler(commands=['start'])
+def send_welcome(message):
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    but1 = types.KeyboardButton("🤵‍♂️Ro'yhatdan o'tish🙍‍♀️")
+    markup.add(but1)
+    bot.send_message(message.chat.id, "Salom! \nMen Goethe imtihoniga tayyorlovchi botman.", reply_markup=markup)
+
+@bot.message_handler(func=lambda message: message.text == "🤵‍♂️Ro'yhatdan o'tish🙍‍♀️")
+def register_user(message):
+    bot.send_message(message.chat.id, "Ismingizni kiriting:")
+    bot.register_next_step_handler(message, get_first_name)
+
+def get_first_name(message):
+    user_data['first_name'] = message.text
+    bot.send_message(message.chat.id, "Familiyangizni kiriting:")
+    bot.register_next_step_handler(message, get_last_name)
+
+def get_last_name(message):
+    user_data['last_name'] = message.text
+    bot.send_message(message.chat.id, "Telefon raqamingizni kiriting (masalan, +998931234567):")
+    bot.register_next_step_handler(message, get_phone_number)
+
+def get_phone_number(message):
+    user_data['phone_number'] = message.text
+    bot.send_message(
+        message.chat.id,
+        f"Ro'yhatdan o'tkazildingiz!\n"
+        f"Ism: {user_data['first_name']}\n"
+        f"Familiya: {user_data['last_name']}\n"
+        f"Telefon: {user_data['phone_number']}",
+        reply_markup=types.ReplyKeyboardRemove()
+    )
+    show_main_menu(message)
+
+def show_main_menu(message):
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    markup.add("Gapirish🗣", "Eshitish🎧")
+    markup.add("O'qish📖", "Yozish✍️")
+    bot.send_message(message.chat.id, "Hurmatli foydalanuvchi! \nO'zingizga kerakli bo'limni tanlang:", reply_markup=markup)
+
+@bot.message_handler(func=lambda message: message.text in ["Gapirish🗣", "Eshitish🎧", "O'qish📖", "Yozish✍️"])
+def main_menu(message):
+    user_id = message.chat.id
+    user_states[user_id] = message.text
+
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    btn1 = types.KeyboardButton("📹 Video darslik")
+    btn2 = types.KeyboardButton("Qo'llanma📔")
+    btn_back = types.KeyboardButton("🔙Orqaga")
+    markup.add(btn1, btn2)
+    markup.add(btn_back)
+
+    section = message.text.replace("📖", "").replace("🗣", "").replace("🎧", "").replace("✍️", "").strip()
+    bot.send_message(user_id, f"{section} bo‘limiga xush kelibsiz!", reply_markup=markup)
+
+@bot.message_handler(func=lambda message: message.text == "🔙Orqaga")
+def go_back(message):
+    show_main_menu(message)
+
+@bot.message_handler(func=lambda message: message.text == "📹 Video darslik")
+def send_video_lesson(message):
+    user_id = message.chat.id
+    section = user_states.get(user_id)
+
+    if section == "Gapirish🗣":
+        try:
+            file_path = "C:\\Users\\rajab\\Downloads\\1_dars.mp4"
+            if not os.path.exists(file_path):
+                bot.send_message(user_id, "❌ Video fayl topilmadi.")
+                return
+
+            with open(file_path, "rb") as video:
+                bot.send_video(user_id, video, caption="Bu 1-dars videosi")
+
+            markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+            markup.add("Tugatdim✅")
+            bot.send_message(user_id, "Video darslikni ko'rib bo'lgach Tugatdim✅ tugmasini bosing", reply_markup=markup)
+
+        except Exception as e:
+            bot.send_message(user_id, f"Video yuborishda xatolik yuz berdi: {e}")
+    if section == "Eshitish🎧":
+        try:
+            files_path ="D:\\Eshitish\\dars_horen.mp4"
+            if not os.path.exists(files_path):
+                bot.send_message(user_id, "❌ Video fayl topilmadi.")
+                return
+            with open(files_path, "rb") as video:
+                  bot.send_video(user_id, video, caption="Bu 1-dars videosi")
+            markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+            markup.add("Tugatdim✅")
+            bot.send_message(user_id, "Video darslikni ko'rib bo'lgach Tugatdim✅ tugmasini bosing", reply_markup=markup)
+        except Exception as e:
+            bot.send_message(user_id, f"Video yuborishda xatolik yuz berdi: {e}")
+    if section== "O'qish📖":
+        try:
+            file1_path="D:\\O'qish\\dars_o'qish.mp4"
+            if not os.path.exists(file1_path):
+                bot.send_message(user_id,"❌ Video fayl topilmadi." )
+                return
+            with open(file1_path, "rb") as video:
+                  bot.send_video(user_id, video, caption="Bu 1-dars videosi")
+            markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+            markup.add("Tugatdim✅")
+            bot.send_message(user_id, "Video darslikni ko'rib bo'lgach Tugatdim✅ tugmasini bosing", reply_markup=markup)
+
+        except Exception as e:
+            bot.send_message(user_id, f"Video yuborishda xatolik yuz berdi: {e}")
+    if section=="Yozish✍️":
+        try:
+            file2_path="D:\\Yozish\\dars_yozish.mp4"
+            if not os.path.exists(file2_path):
+                bot.send_message(user_id, "❌ Video fayl topilmadi." )
+                return
+            with open(file2_path, 'rb') as video:
+                bot.send_video(user_id, video, caption="Bu 1-dars videosi" )
+            markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+            markup.add("Tugatdim✅")
+            bot.send_message(user_id, "Video darslikni ko'rib bo'lgach Tugatdim✅ tugmasini bosing", reply_markup=markup)
+        except Exception as e:
+            bot.send_message(user_id, f"Video yuborishda xatolik yuz berdi: {e}")
+
+@bot.message_handler(func=lambda message: message.text == "Tugatdim✅")
+def start_test(message):
+    user_id = message.chat.id
+    section = user_states.get(user_id)
+
+    if section == "Gapirish🗣":
+        bot.send_message(user_id, "📝 Sprechen (Gapirish) bo‘limi uchun test boshlandi! ✅")
+        ask_question1(message)
+    elif section == "Eshitish🎧":
+        bot.send_message(user_id, "📝 Eshitish (Horen) bo‘limi uchun test boshlandi! ✅")
+        ask_esitish_question1(message)
+    elif section == "O'qish📖":
+        bot.send_message(user_id,"O'qish📖 (SCHREIBEN) bo'limi uchun test boshlandi! ✅" )
+        ask_oqish_question1(message)
+    elif section == "Yozish✍️":
+        bot.send_message(user_id, "Yozish✍️ (LESEN) bo'limi uchun test boshlandi! ✅")
+        ask_yozish_question1(message)
+def ask_oqish_question1(message):
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+    markup.add("A) Ich wohne in Berlin.", "B) Ich bin Lehrer.", "C) Ich liebe Kaffee.", "D) Ich gehe ins Kino.")
+    bot.send_message(message.chat.id, "1.  Wo wohnst du? (Qayerda yashaysan?)\n", reply_markup=markup)
+    bot.register_next_step_handler(message, check_oqish_question1)
+def check_oqish_question1(message):
+    if message.text and message.text.startswith("A"):
+        bot.send_message(message.chat.id, "✅ To‘g‘ri!")
+    else:
+        bot.send_message(message.chat.id, "❌ Noto‘g‘ri. To‘g‘ri javob: A) Ich wohne in Berlin.")
+    ask_oqish_question2(message)
+def ask_question1(message):
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+    markup.add("A) Ich heiße Anna.", "B) Ich bin Hunger.", "C) Ich gehen Schule.", "D) Ich ist Student.")
+    bot.send_message(message.chat.id, "1. Qaysi gap grammatik jihatdan to‘g‘ri?\n", reply_markup=markup)
+    bot.register_next_step_handler(message, check_question1)
+
+def check_question1(message):
+    if message.text and message.text.startswith("A"):
+        bot.send_message(message.chat.id, "✅ To‘g‘ri!")
+    else:
+        bot.send_message(message.chat.id, "❌ Noto‘g‘ri. To‘g‘ri javob: A) Ich heiße Anna.")
+    ask_question2(message)
+
+def ask_question2(message):
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+    markup.add("A) Du ist Lehrer.", "B) Du bist Lehrer.", "C) Du sind Lehrer.", "D) Du bin Lehrer.")
+    bot.send_message(message.chat.id, "2. Du uchun to‘g‘ri fe’l shakli qaysi?", reply_markup=markup)
+    bot.register_next_step_handler(message, check_question2)
+
+def check_question2(message):
+    if message.text and message.text.startswith("B"):
+        bot.send_message(message.chat.id, "✅ To‘g‘ri!")
+    else:
+        bot.send_message(message.chat.id, "❌ Noto‘g‘ri. To‘g‘ri javob: B) Du bist Lehrer.")
+    ask_question3(message)
+
+def ask_question3(message):
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+    markup.add("A) Wir gehe ins Kino.", "B) Wir geht ins Kino.", "C) Wir gehen ins Kino.", "D) Wir geht ins Schule.")
+    bot.send_message(message.chat.id, "3. To‘g‘ri variantni tanlang:", reply_markup=markup)
+    bot.register_next_step_handler(message, check_question3)
+
+def check_question3(message):
+    if message.text and message.text.startswith("C"):
+        bot.send_message(message.chat.id, "✅ To‘g‘ri!")
+    else:
+        bot.send_message(message.chat.id, "❌ Noto‘g‘ri. To‘g‘ri javob: C) Wir gehen ins Kino.")
+    ask_question4(message)
+
+def ask_question4(message):
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+    markup.add("A) Er bist müde.", "B) Er bin müde.", "C) Er sind müde.", "D) Er ist müde.")
+    bot.send_message(message.chat.id, "4. “U charchagan” jumlasining to‘g‘ri shakli:", reply_markup=markup)
+    bot.register_next_step_handler(message, check_question4)
+
+def check_question4(message):
+    if message.text and message.text.startswith("D"):
+        bot.send_message(message.chat.id, "✅ To‘g‘ri!")
+    else:
+        bot.send_message(message.chat.id, "❌ Noto‘g‘ri. To‘g‘ri javob: D) Er ist müde.")
+    ask_question5(message)
+
+def ask_question5(message):
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+    markup.add("A) Ich kannst singen.", "B) Ich können singen.", "C) Ich kann singen.", "D) Ich kannst spielen.")
+    bot.send_message(message.chat.id, "5. Modal fe’l bilan to‘g‘ri qo‘llangan gapni tanlang:", reply_markup=markup)
+    bot.register_next_step_handler(message, check_question5)
+
+def check_question5(message):
+    if message.text and message.text.startswith("C"):
+        bot.send_message(message.chat.id, "✅ To‘g‘ri!")
+    else:
+        bot.send_message(message.chat.id, "❌ Noto‘g‘ri. To‘g‘ri javob: C) Ich kann singen.")
+    bot.send_message(message.chat.id, "🎉 Test yakunlandi! Ajoyib ish!")
+    show_main_menu(message)
+
+def ask_esitish_question1(message):
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+    markup.add(
+        "A) Mening ismim Anna.",
+        "B) Men ishimni yaxshi bilaman.",
+        "C) Men o‘qishni yaxshi ko‘raman.",
+        "D) Men kutubxonada turaman."
+    )
+    bot.send_message(message.chat.id, "1. Quyidagi gapdan to‘g‘ri tarjimani tanlang:", reply_markup=markup)
+    bot.register_next_step_handler(message, check_esitish_question1)
+
+def check_esitish_question1(message):
+    if message.text and message.text.startswith("A"):
+        bot.send_message(message.chat.id, "✅ To‘g‘ri!")
+    else:
+        bot.send_message(message.chat.id, "❌ Noto‘g‘ri. To‘g‘ri javob: A) Mening ismim Anna.")
+    ask_esitish_question2(message)
+
+def ask_esitish_question2(message):
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+    markup.add(
+        "A) U bilan uchrashamiz.",
+        "B) U bilan kelishamiz.",
+        "C) U bilan yozamiz.",
+        "D) U bilan o‘rganamiz."
+    )
+    bot.send_message(message.chat.id, "2. Quyidagi gapdan to‘g‘ri tarjimani tanlang:", reply_markup=markup)
+    bot.register_next_step_handler(message, check_esitish_question2)
+
+def check_esitish_question2(message):
+    if message.text and message.text.startswith("B"):
+        bot.send_message(message.chat.id, "✅ To‘g‘ri!")
+    else:
+        bot.send_message(message.chat.id, "❌ Noto‘g‘ri. To‘g‘ri javob: B) U bilan kelishamiz.")
+    ask_esitish_question3(message)
+
+def ask_esitish_question3(message):
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+    markup.add(
+        "A) U yaxshi ishlaydi.",
+        "B) U yaxshi ishlaydi.",
+        "C) U yaxshi ishlamaydi.",
+        "D) U yomon ishlaydi."
+    )
+    bot.send_message(message.chat.id, "3. Quyidagi gapdan to‘g‘ri tarjimani tanlang:", reply_markup=markup)
+    bot.register_next_step_handler(message, check_esitish_question3)
+
+def check_esitish_question3(message):
+    if message.text and message.text.startswith("B"):
+        bot.send_message(message.chat.id, "✅ To‘g‘ri!")
+    else:
+        bot.send_message(message.chat.id, "❌ Noto‘g‘ri. To‘g‘ri javob: B) U yaxshi ishlaydi.")
+    bot.send_message(message.chat.id, "🎉 Eshitish test yakunlandi! Ajoyib ish!")
+    show_main_menu(message)
+def ask_oqish_question1(message):
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+    markup.add("A) Ich wohne in Berlin.", "B) Ich bin Lehrer.", "C) Ich liebe Kaffee.", "D) Ich gehe ins Kino.")
+    bot.send_message(message.chat.id, "1.  Wo wohnst du? (Qayerda yashaysan?)\n", reply_markup=markup)
+    bot.register_next_step_handler(message, check_oqish_question1)
+def check_oqish_question1(message):
+    if message.text and message.text.startswith("B"):
+        bot.send_message(message.chat.id, "✅ To‘g‘ri!")
+    else:
+        bot.send_message(message.chat.id, "❌ Noto‘g‘ri. To‘g‘ri javob: B) Ich wohne in Berlin.")
+    ask_oqish_question2(message)
+def ask_oqish_question2(message):
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+    markup.add("A) Ich spiele Fußball.", "B) Ich trinke Wasser.", "C) Ich bin müde.", "D) Ich schlafe viel.")
+    bot.send_message(message.chat.id, "2.  Was machst du gern? (Nima qilishni yaxshi ko‘rasiz?)\n", reply_markup=markup)
+    bot.register_next_step_handler(message, check_oqish_question2)
+def check_oqish_question2(message):
+    if message.text and message.text.startswith("C"):
+        bot.send_message(message.chat.id, "✅ To‘g‘ri!")
+    else:
+        bot.send_message(message.chat.id, "❌ Noto‘g‘ri. To‘g‘ri javob: C) Ich wohne in Berlin.")
+    ask_oqish_question3(message)
+def ask_oqish_question3(message):
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+    markup.add("A) Ich bin zehn Jahre alt.", "B) Ich bin Lehrer.", "C) Ich gehe zur Schule.", "D) Ich habe einen Hund.")
+    bot.send_message(message.chat.id, "3. Wie alt bist du? (Yoshingiz nechida?)\n", reply_markup=markup)
+def check_oqish_question3(message):
+    if message.text and message.text.startswith("D"):
+        bot.send_message(message.chat.id, "✅ To‘g‘ri!")
+    else:
+        bot.send_message(message.chat.id, "❌ Noto‘g‘ri. To‘g‘ri javob: D) Ich wohne in Berlin.")
+    ask_oqish_question3(message)
+def ask_yozish_question1(message):
+        markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+        markup.add("A) Ich bin müde.", "B) Ich bin glücklich.", "C) Ich bin traurig.", "D) Ich bin hungrig.")
+        bot.send_message(message.chat.id, "1. Nima haqida yozing: Men xafa bo‘ldim.", reply_markup=markup)
+        bot.register_next_step_handler(message, check_yozish_question1)
+
+def check_yozish_question1(message):
+        if message.text and message.text.startswith("C"):
+            bot.send_message(message.chat.id, "✅ To‘g‘ri!")
+        else:
+            bot.send_message(message.chat.id, "❌ Noto‘g‘ri. To‘g‘ri javob: C) Ich bin traurig.")
+        ask_yozish_question2(message)
+
+def ask_yozish_question2(message):
+        markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+        markup.add("A) Ich möchte ein Auto kaufen.", "B) Ich möchte ins Kino gehen.", "C) Ich möchte ein Buch lesen.",
+                   "D) Ich möchte spazieren gehen.")
+        bot.send_message(message.chat.id, "2. Nima haqida yozish mumkin? (Was möchten Sie schreiben?)",
+                         reply_markup=markup)
+        bot.register_next_step_handler(message, check_yozish_question2)
+
+def check_yozish_question2(message):
+        if message.text and message.text.startswith("A"):
+            bot.send_message(message.chat.id, "✅ To‘g‘ri!")
+        else:
+            bot.send_message(message.chat.id, "❌ Noto‘g‘ri. To‘g‘ri javob: A) Ich möchte ein Auto kaufen.")
+        ask_yozish_question3(message)
+
+def ask_yozish_question3(message):
+        markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+        markup.add("A) Ich bin müde.", "B) Ich bin glücklich.", "C) Ich bin hungrig.", "D) Ich bin krank.")
+        bot.send_message(message.chat.id, "3. Nima haqida yozish mumkin? (Was können Sie schreiben?)",
+                         reply_markup=markup)
+        bot.register_next_step_handler(message, check_yozish_question3)
+
+def check_yozish_question3(message):
+        if message.text and message.text.startswith("D"):
+            bot.send_message(message.chat.id, "✅ To‘g‘ri!")
+        else:
+            bot.send_message(message.chat.id, "❌ Noto‘g‘ri. To‘g‘ri javob: D) Ich bin krank.")
+bot.polling()
